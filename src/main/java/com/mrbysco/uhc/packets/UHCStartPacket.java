@@ -91,13 +91,13 @@ public class UHCStartPacket {
 
 						if (saveData.isRandomSpawns()) {
 							try {
-								SpreadUtil.spread(soloPlayers, new SpreadPosition(centerX, centerZ), spreadDistance, spreadMaxRange, level, saveData.isSpreadRespectTeam());
+								SpreadUtil.spread(teamPlayers, new SpreadPosition(centerX, centerZ), spreadDistance, spreadMaxRange, level, saveData.isSpreadRespectTeam());
 							} catch (CommandRuntimeException e) {
 								e.printStackTrace();
 							}
 
 							try {
-								SpreadUtil.spread(teamPlayers, new SpreadPosition(centerX, centerZ), spreadDistance, spreadMaxRange, level, false);
+								SpreadUtil.spread(soloPlayers, new SpreadPosition(centerX, centerZ), spreadDistance, spreadMaxRange, level, false);
 							} catch (CommandRuntimeException e) {
 								e.printStackTrace();
 							}
