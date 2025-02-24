@@ -20,7 +20,7 @@ public class GameRuleHandler {
 			GameRules rules = server.getGameRules();
 
 			if (rules.getBoolean(GameRules.RULE_NATURAL_REGENERATION))
-				rules.getRule(GameRules.RULE_NATURAL_REGENERATION).set(false, server);
+				rules.getRule(GameRules.RULE_NATURAL_REGENERATION).set(true, server);
 		}
 	}
 

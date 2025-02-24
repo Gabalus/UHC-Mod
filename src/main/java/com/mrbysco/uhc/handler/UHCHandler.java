@@ -54,6 +54,7 @@ import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -113,7 +114,7 @@ public class UHCHandler {
 								timerData.setDirty();
 							} else if (timerData.getUhcStartTimer() == 7) {
 								sendSystemMessage(playerList, Component.translatable("uhc.start"));
-
+								++this.uhcStartTimer;
 								timerData.setUhcStartTimer(0);
 								saveData.setDirty();
 							}
@@ -122,7 +123,52 @@ public class UHCHandler {
 							timerData.setUhcStartTimer(this.uhcStartTimer);
 							timerData.setDirty();
 						}
-					} else {
+					}
+					else if (saveData.isUhcIsFinished()&&!saveData.isUhcStarting()) {
+						if (timerData.getUhcStartTimer() != this.uhcStartTimer) {
+							this.uhcStartTimer = timerData.getUhcStartTimer();
+						}
+
+						if (timerData.getUhcStartTimer() == 2 || timerData.getUhcStartTimer() == 3 || timerData.getUhcStartTimer() == 4 ||
+								timerData.getUhcStartTimer() == 5 || timerData.getUhcStartTimer() == 6 || timerData.getUhcStartTimer() == 7) {
+							if (timerData.getUhcStartTimer() == 2) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start.5"));
+								++this.uhcStartTimer;
+								timerData.setUhcStartTimer(this.uhcStartTimer);
+								timerData.setDirty();
+							} else if (timerData.getUhcStartTimer() == 3) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start.4"));
+								++this.uhcStartTimer;
+								timerData.setUhcStartTimer(this.uhcStartTimer);
+								timerData.setDirty();
+							} else if (timerData.getUhcStartTimer() == 4) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start.3"));
+								++this.uhcStartTimer;
+								timerData.setUhcStartTimer(this.uhcStartTimer);
+								timerData.setDirty();
+							} else if (timerData.getUhcStartTimer() == 5) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start.2"));
+								++this.uhcStartTimer;
+								timerData.setUhcStartTimer(this.uhcStartTimer);
+								timerData.setDirty();
+							} else if (timerData.getUhcStartTimer() == 6) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start.1"));
+								++this.uhcStartTimer;
+								timerData.setUhcStartTimer(this.uhcStartTimer);
+								timerData.setDirty();
+							} else if (timerData.getUhcStartTimer() == 7) {
+								sendSystemMessage(playerList, Component.translatable("uhc.start"));
+								timerData.setUhcStartTimer(0);
+								saveData.setDirty();
+								ServerLifecycleHooks.getCurrentServer().halt(false);
+							}
+						} else {
+							++this.uhcStartTimer;
+							timerData.setUhcStartTimer(this.uhcStartTimer);
+							timerData.setDirty();
+						}
+					}
+					else {
 						if (timerData.getUhcStartTimer() != 0) {
 							timerData.setUhcStartTimer(0);
 							timerData.setDirty();
@@ -147,7 +193,7 @@ public class UHCHandler {
 				if (!entityData.contains("startFatigue"))
 					entityData.putBoolean("startFatigue", true);
 
-				if (this.uhcStartTimer == 7) {
+				if (this.uhcStartTimer == 8) {
 					if (!SpawnItemList.spawnItemList.isEmpty() && SpawnItemList.spawnItemList != null) {
 						for (SpawnItemInfo info : SpawnItemList.spawnItemList) {
 							for (int i = 0; i < info.getStackCount(); i++) {
