@@ -5,6 +5,7 @@ import com.mrbysco.uhc.data.UHCSaveData;
 import com.mrbysco.uhc.data.UHCTimerData;
 import com.mrbysco.uhc.lists.SpawnItemList;
 import com.mrbysco.uhc.lists.info.SpawnItemInfo;
+import com.mrbysco.uhc.packets.ShrinkTimeSyncPacket;
 import com.mrbysco.uhc.packets.UHCPacketHandler;
 import com.mrbysco.uhc.packets.UHCPacketMessage;
 import com.mrbysco.uhc.registry.ModRegistry;
@@ -59,6 +60,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -67,11 +69,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Mod.EventBusSubscriber
 public class UHCHandler {
 
 	public int uhcStartTimer;
 	private static final String TIMER_TAG = "SpectatorRespawnTimer";
 	private static final String ORIGINAL_TEAM_TAG = "OriginalTeam";
+
+	@SubscribeEvent
+	public static void onServerTick(TickEvent.ServerTickEvent event) {
+		if (event.phase == TickEvent.Phase.END) {
+			Level level = event.getServer().overworld();
+			UHCTimerData timerData = UHCTimerData.get(level);
+			int shrinkTime = timerData.getShrinkTimeUntil();
+
+			for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
+				UHCPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ShrinkTimeSyncPacket(TimerHandler.tickTime(shrinkTime)));
+			}
+		}
+	}
 
 	@SubscribeEvent
 	public void UHCStartEventWorld(TickEvent.LevelTickEvent event) {

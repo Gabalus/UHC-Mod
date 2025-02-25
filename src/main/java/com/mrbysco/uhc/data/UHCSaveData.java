@@ -113,7 +113,7 @@ public class UHCSaveData extends SavedData {
 		this.originalBorderCenterX = Integer.MAX_VALUE;
 		this.originalBorderCenterZ = Integer.MAX_VALUE;
 
-		this.shrinkEnabled = false;
+		this.shrinkEnabled = true;
 		this.shrinkTimer = 60;
 		this.shrinkSize = 256;
 		this.shrinkOvertime = 60;
@@ -185,7 +185,7 @@ public class UHCSaveData extends SavedData {
 		this.originalBorderCenterX = Integer.MAX_VALUE;
 		this.originalBorderCenterZ = Integer.MAX_VALUE;
 
-		this.shrinkEnabled = false;
+		this.shrinkEnabled = true;
 		this.shrinkTimer = 60;
 		this.shrinkSize = 256;
 		this.shrinkOvertime = 60;

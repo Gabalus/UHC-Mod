@@ -31,5 +31,10 @@ public class UHCPacketHandler {
 		INSTANCE.registerMessage(id++, UHCPage5Packet.class, UHCPage5Packet::encode, UHCPage5Packet::decode, UHCPage5Packet::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
 		INSTANCE.registerMessage(id++, UHCPage6Packet.class, UHCPage6Packet::encode, UHCPage6Packet::decode, UHCPage6Packet::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
 		INSTANCE.registerMessage(id++, UHCPacketTeamRandomizer.class, UHCPacketTeamRandomizer::encode, UHCPacketTeamRandomizer::decode, UHCPacketTeamRandomizer::handle, Optional.of(NetworkDirection.PLAY_TO_SERVER));
+		INSTANCE.messageBuilder(ShrinkTimeSyncPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+				.encoder(ShrinkTimeSyncPacket::encode)
+				.decoder(ShrinkTimeSyncPacket::decode)
+				.consumerMainThread(ShrinkTimeSyncPacket::handle)
+				.add();
 	}
 }

@@ -1,5 +1,6 @@
 package com.mrbysco.uhc;
 
+import com.mrbysco.uhc.client.ClientHandler;
 import com.mrbysco.uhc.commands.UHCCommands;
 import com.mrbysco.uhc.config.UHCConfig;
 import com.mrbysco.uhc.handler.AutoCookHandler;
@@ -30,6 +31,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,6 +40,8 @@ import org.apache.logging.log4j.Logger;
 
 public class UltraHardCoremod {
 	public static final Logger LOGGER = LogManager.getLogger();
+
+
 
 	public UltraHardCoremod() {
 		IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -71,6 +75,7 @@ public class UltraHardCoremod {
 			//TODO: insert client stuff here
 		});
 	}
+
 
 	private void setup(final FMLCommonSetupEvent event) {
 		LOGGER.debug("Registering Packets");
