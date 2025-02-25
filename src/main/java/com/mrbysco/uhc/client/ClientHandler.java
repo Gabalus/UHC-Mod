@@ -9,7 +9,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -20,6 +19,7 @@ public class ClientHandler {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static int respawnTimeInSeconds = 0;
     private static int shrinkTimeInSeconds = 0;
+    private static String playerTeam = "";
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -43,7 +43,9 @@ public class ClientHandler {
 
         guiGraphics.drawString(minecraft.font, "Сжатие через: " + shrinkTime, 10, 25, 0xFF5555);
 
-        guiGraphics.drawString(minecraft.font, "Респаун через: " + respawnTime, 10, 40, 0x00FF00);
+        if (playerTeam.equals("spectator")) {
+            guiGraphics.drawString(minecraft.font, "Респаун через: " + respawnTime, 10, 40, 0x00FF00);
+        }
 
         RenderSystem.disableBlend();
     }
@@ -52,7 +54,8 @@ public class ClientHandler {
         shrinkTimeInSeconds = shrinkTimeSeconds;
     }
 
-    public static void setRespawnTime(int respawnTimeSeconds) {
+    public static void setRespawnTime(int respawnTimeSeconds, String team) {
         respawnTimeInSeconds = respawnTimeSeconds;
+        playerTeam = team;
     }
 }

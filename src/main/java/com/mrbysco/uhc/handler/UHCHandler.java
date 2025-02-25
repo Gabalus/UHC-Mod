@@ -757,52 +757,30 @@ public class UHCHandler {
 			final ServerLevel overworld = (ServerLevel) level;
 			Scoreboard scoreboard = overworld.getScoreboard();
 
-			Team spectatorTeam = scoreboard.getPlayerTeam("spectator");
-			boolean isSpectator = spectatorTeam != null && spectatorTeam.getPlayers().contains(player.getScoreboardName());
+			Team team = scoreboard.getPlayersTeam(player.getScoreboardName());
+			String teamName = (team != null) ? team.getName() : "";
+
+			boolean isSpectator = teamName.equals("spectator");
 			CompoundTag entityData = player.getPersistentData();
-			UHCTimerData timerData = UHCTimerData.get(overworld);
 
-			if (isSpectator) {
-				if (entityData.contains(TIMER_TAG)) {
-					int timer = entityData.getInt(TIMER_TAG);
+			if (isSpectator && entityData.contains(TIMER_TAG)) {
+				int timer = entityData.getInt(TIMER_TAG);
 
-					// Send the timer to the client
-					UHCPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new RespawnTimerSyncPacket(timer));
+				UHCPacketHandler.INSTANCE.send(
+						PacketDistributor.PLAYER.with(() -> (ServerPlayer) player),
+						new RespawnTimerSyncPacket(timer, teamName)
+				);
 
-					if (timer < 0) {
-						timer--;
-						entityData.putInt(TIMER_TAG, timer);
-					} else {
-						if (hasAliveAllies(player, scoreboard)) {
-							// Respawn logic
-							double worldBorderSize = overworld.getWorldBorder().getSize();
-							double spreadMaxRange = worldBorderSize / 2;
-							double spreadDistance = 50.0;
-
-							List<ServerPlayer> playerList = new ArrayList<>(Collections.singletonList((ServerPlayer) player));
-							SpreadUtil.spread(playerList, new SpreadPosition(0, 0), spreadDistance - 10, spreadMaxRange, overworld, false);
-
-							scoreboard.removePlayerFromTeam(player.getScoreboardName());
-
-							if (player instanceof ServerPlayer serverPlayer) {
-								serverPlayer.setGameMode(GameType.SURVIVAL);
-							}
-
-							if (entityData.contains(ORIGINAL_TEAM_TAG)) {
-								String originalTeamName = entityData.getString(ORIGINAL_TEAM_TAG);
-								PlayerTeam originalTeam = scoreboard.getPlayersTeam(originalTeamName);
-								if (originalTeam != null) {
-									scoreboard.addPlayerToTeam(player.getScoreboardName(), originalTeam);
-								}
-								entityData.remove(ORIGINAL_TEAM_TAG);
-							}
-						}
-						entityData.remove(TIMER_TAG);
-					}
+				if (timer > 0) {
+					timer--;
+					entityData.putInt(TIMER_TAG, timer);
+				} else {
+					entityData.remove(TIMER_TAG);
 				}
 			}
 		}
 	}
+
 
 
 	private boolean hasAliveAllies(Player player, Scoreboard scoreboard) {
