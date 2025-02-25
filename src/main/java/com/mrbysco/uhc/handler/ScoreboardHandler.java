@@ -50,22 +50,22 @@ public class ScoreboardHandler {
 					makeTeam(scoreboard, "spectator", ChatFormatting.BLACK);
 				}
 
-				if (scoreboard.getOrCreateObjective("health") == null) {
+/*				if (scoreboard.getOrCreateObjective("health") == null) {
 					scoreboard.addObjective("health", ObjectiveCriteria.HEALTH, Component.literal("health"), RenderType.HEARTS);
 				}
 
-				boolean healthExists = scoreboard.getOrCreateObjective("health") != null;
+				boolean healthExists = scoreboard.getOrCreateObjective("health") != null;*/
 
-				if (saveData.isHealthInTab() && healthExists) {
+/*				if (saveData.isHealthInTab() && healthExists) {
 					Objective score = scoreboard.getOrCreateObjective("health");
 					if (scoreboard.getDisplayObjective(0) != score) {
 						scoreboard.setDisplayObjective(0, score);
 						scoreboard.setDisplayObjective(1, null);
 						scoreboard.setDisplayObjective(2, null);
 					}
-				}
+				}*/
 
-				if (saveData.isHealthOnSide() && healthExists) {
+				/*if (saveData.isHealthOnSide() && healthExists) {
 					Objective score = scoreboard.getOrCreateObjective("health");
 					if (scoreboard.getDisplayObjective(1) != score) {
 						scoreboard.setDisplayObjective(0, null);
@@ -80,7 +80,7 @@ public class ScoreboardHandler {
 						scoreboard.setDisplayObjective(1, null);
 						scoreboard.setDisplayObjective(2, score);
 					}
-				}
+				}*/
 			}
 		}
 	}
@@ -101,10 +101,10 @@ public class ScoreboardHandler {
 					}
 				}
 
-				if (scoreboard.getPlayersTeam(player.getName().getString()) == scoreboard.getPlayerTeam("spectator") && saveData.isUhcOnGoing()) {
+/*				if (scoreboard.getPlayersTeam(player.getName().getString()) == scoreboard.getPlayerTeam("spectator") && saveData.isUhcOnGoing()) {
 					if (!player.isCreative())
 						((ServerPlayer) player).setGameMode(GameType.SPECTATOR);
-				}
+				}*/
 			}
 		}
 	}

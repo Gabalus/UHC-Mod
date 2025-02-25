@@ -91,7 +91,7 @@ public class BorderHandler {
 
 				int oldSize = saveData.getBorderSize();
 				int newSize = saveData.getShrinkSize();
-				long shrinkTimeSec = saveData.getShrinkOvertime() > 0 ? saveData.getShrinkOvertime() * 60L*20L : 0L;
+				long shrinkTimeSec = saveData.getShrinkOvertime() > 0 ? saveData.getShrinkOvertime() *60L*60L*20L : 0L;
 
 				if (shrinkMode.equals("Shrink") && shrinkFlag && !shrinkApplied) {
 					border.lerpSizeBetween(oldSize, newSize, shrinkTimeSec);

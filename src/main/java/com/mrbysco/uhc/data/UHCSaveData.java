@@ -89,7 +89,7 @@ public class UHCSaveData extends SavedData {
 		this.UHCDimension = new ResourceLocation("overworld");
 		this.friendlyFire = true;
 		this.teamCollision = true;
-		this.healthInTab = true;
+		this.healthInTab = false;
 		this.healthOnSide = false;
 		this.healthUnderName = false;
 
@@ -161,7 +161,7 @@ public class UHCSaveData extends SavedData {
 		this.UHCDimension = new ResourceLocation("overworld");
 		this.friendlyFire = true;
 		this.teamCollision = true;
-		this.healthInTab = true;
+		this.healthInTab = false;
 		this.healthOnSide = false;
 		this.healthUnderName = false;
 
@@ -233,7 +233,7 @@ public class UHCSaveData extends SavedData {
 		this.UHCDimension = new ResourceLocation("overworld");
 		this.friendlyFire = true;
 		this.teamCollision = true;
-		this.healthInTab = true;
+		this.healthInTab = false;
 		this.healthOnSide = false;
 		this.healthUnderName = false;
 
@@ -255,7 +255,7 @@ public class UHCSaveData extends SavedData {
 		this.borderCenterX = Integer.MAX_VALUE;
 		this.borderCenterZ = Integer.MAX_VALUE;
 
-		this.shrinkEnabled = false;
+		this.shrinkEnabled = true;
 		this.shrinkTimer = 60;
 		this.shrinkSize = 256;
 		this.shrinkOvertime = 60;

@@ -9,6 +9,8 @@ import com.mrbysco.uhc.packets.UHCPacketHandler;
 import com.mrbysco.uhc.packets.UHCPacketMessage;
 import com.mrbysco.uhc.registry.ModRegistry;
 import com.mrbysco.uhc.utils.PlayerHelper;
+import com.mrbysco.uhc.utils.SpreadPosition;
+import com.mrbysco.uhc.utils.SpreadUtil;
 import com.mrbysco.uhc.utils.UHCTeleporter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -38,14 +40,19 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.scores.Team;
+import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.PlayerTickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
@@ -57,11 +64,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class UHCHandler {
 
 	public int uhcStartTimer;
+	private static final String TIMER_TAG = "SpectatorRespawnTimer";
+	private static final String ORIGINAL_TEAM_TAG = "OriginalTeam";
 
 	@SubscribeEvent
 	public void UHCStartEventWorld(TickEvent.LevelTickEvent event) {
@@ -660,7 +670,29 @@ public class UHCHandler {
 			BlockPos deathPos = originalPlayer.blockPosition();
 			newData.putLong("deathPos", deathPos.asLong());
 			newData.putString("deathDim", originalPlayer.level().dimension().location().toString());
+			Scoreboard scoreboard = newPlayer.level().getScoreboard();
+			Team currentTeam = scoreboard.getPlayersTeam(newPlayer.getScoreboardName());
+			if (currentTeam != null && !currentTeam.getName().equals("spectator")) {
+				CompoundTag data = newPlayer.getPersistentData();
+				data.putString(ORIGINAL_TEAM_TAG, currentTeam.getName());
+			}
 			((ServerPlayer) newPlayer).setRespawnPosition(originalPlayer.level().dimension(), deathPos, originalPlayer.getYRot(), true, false);
+		}
+	}
+
+	@SubscribeEvent
+	public void onPlayerDeath(LivingDeathEvent event) {
+		if (event.getEntity() instanceof ServerPlayer player) {
+			Level level = player.level();
+			/*if (!level.isClientSide && level.dimension().equals(Level.OVERWORLD)) {
+				Scoreboard scoreboard = level.getScoreboard();
+				Team currentTeam = scoreboard.getPlayersTeam(player.getScoreboardName());
+				if (currentTeam != null && !currentTeam.getName().equals("spectator")) {
+					CompoundTag data = player.getPersistentData();
+					data.putInt("ORIGINAL_TEAM_TAG", 123);
+					Level asd = player.level();
+				}
+			}*/
 		}
 	}
 
@@ -675,13 +707,112 @@ public class UHCHandler {
 				UHCSaveData saveData = UHCSaveData.get(overworld);
 				if (saveData.isUhcOnGoing()) {
 					PlayerTeam spectatorTeam = scoreboard.getPlayerTeam("spectator");
-					scoreboard.addPlayerToTeam(player.getName().getString(), spectatorTeam);
+					if (spectatorTeam == null) {
+						spectatorTeam = scoreboard.addPlayerTeam("spectator");
+					}
+					scoreboard.addPlayerToTeam(player.getScoreboardName(), spectatorTeam);
 
 					scoreboard.getOrCreateObjective("health");
-					scoreboard.resetPlayerScore(player.getName().getString(), scoreboard.getOrCreateObjective("health"));
+					scoreboard.resetPlayerScore(player.getScoreboardName(), scoreboard.getOrCreateObjective("health"));
+
+					if (player instanceof ServerPlayer serverPlayer) {
+						serverPlayer.setGameMode(GameType.SPECTATOR);
+						CompoundTag entityData = player.getPersistentData();
+						entityData.putInt(TIMER_TAG, 600);
+						Objective respawnTimerObjective = scoreboard.getObjective("respawnTimer");
+						if (respawnTimerObjective == null) {
+							respawnTimerObjective = scoreboard.addObjective("respawnTimer", ObjectiveCriteria.DUMMY,
+									Component.literal("Respawn Timer"), ObjectiveCriteria.RenderType.INTEGER);
+							scoreboard.setDisplayObjective(1, respawnTimerObjective);
+						}
+					}
+
 				}
 			}
 		}
+	}
+
+	@SubscribeEvent
+	public void respawnerTimerIfPlayerAlive(PlayerTickEvent event) {
+		Player player = event.player;
+		Level level = player.level();
+		if (event.phase == TickEvent.Phase.END && event.side.isServer() && level.dimension().equals(Level.OVERWORLD)) {
+			final ServerLevel overworld = (ServerLevel) level;
+			Scoreboard scoreboard = overworld.getScoreboard();
+
+
+
+			Team spectatorTeam = scoreboard.getPlayerTeam("spectator");
+			boolean isSpectator = spectatorTeam != null && spectatorTeam.getPlayers().contains(player.getScoreboardName());
+			CompoundTag entityData = player.getPersistentData();
+			Objective respawnTimerObjective = scoreboard.getObjective("respawnTimer");
+			UHCSaveData saveData = UHCSaveData.get(overworld);
+			UHCTimerData timerData = UHCTimerData.get(overworld);
+			int shrinkTimer = timerData.getShrinkTimeUntil();
+			boolean shrinkFlag = shrinkTimer > TimerHandler.tickTime(saveData.getShrinkTimer());
+			if (isSpectator&&!shrinkFlag) {
+
+				if (entityData.contains(TIMER_TAG)) {
+					int timer = entityData.getInt(TIMER_TAG);
+					if (timer < 0) {
+						timer--;
+						entityData.putInt(TIMER_TAG, timer);
+
+						scoreboard.getOrCreatePlayerScore(player.getScoreboardName(), respawnTimerObjective).setScore(timer/20);
+					} else {
+						if (hasAliveAllies(player, scoreboard)) {
+							double worldBorderSize = overworld.getWorldBorder().getSize();
+							double spreadMaxRange = worldBorderSize / 2;
+							double spreadDistance = 50.0;
+
+							List<ServerPlayer> playerList = new ArrayList<>(Collections.singletonList((ServerPlayer) player));
+							SpreadUtil.spread(playerList, new SpreadPosition(0, 0), spreadDistance - 10, spreadMaxRange, overworld, false);
+
+							scoreboard.removePlayerFromTeam(player.getScoreboardName());
+
+							if (player instanceof ServerPlayer serverPlayer) {
+								serverPlayer.setGameMode(GameType.SURVIVAL);
+							}
+
+							if (entityData.contains(ORIGINAL_TEAM_TAG)) {
+								String originalTeamName = entityData.getString(ORIGINAL_TEAM_TAG);
+								PlayerTeam originalTeam = scoreboard.getPlayersTeam(originalTeamName);
+								if (originalTeam != null) {
+									scoreboard.addPlayerToTeam(player.getScoreboardName(), originalTeam);
+								}
+								entityData.remove(ORIGINAL_TEAM_TAG);
+							}
+						}
+						entityData.remove(TIMER_TAG);
+						scoreboard.resetPlayerScore(player.getScoreboardName(), respawnTimerObjective);
+					}
+				} /*else {
+					if (entityData.contains(TIMER_TAG)) {
+						entityData.remove(TIMER_TAG);
+						scoreboard.resetPlayerScore(player.getScoreboardName(), respawnTimerObjective);
+					}*/
+				}
+			}
+		}
+
+	private boolean hasAliveAllies(Player player, Scoreboard scoreboard) {
+		CompoundTag entityData = player.getPersistentData();
+		String originalTeamName = entityData.getString(ORIGINAL_TEAM_TAG);
+		PlayerTeam team = scoreboard.getPlayerTeam(originalTeamName);
+		if (team != null && team.getName() != "solo") {
+			for (String teammateName : team.getPlayers()) {
+				if (!teammateName.equals(player.getScoreboardName())) {
+					ServerPlayer ally = player.getServer().getPlayerList().getPlayerByName(teammateName);
+					if (ally != null && ally.isAlive()) {
+						Team allyTeam = scoreboard.getPlayersTeam(ally.getScoreboardName());
+						if (allyTeam == null || !allyTeam.getName().equals("spectator")) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	public void YouWonTheUHC(PlayerTeam team, List<ServerPlayer> playerList, Level level) {
