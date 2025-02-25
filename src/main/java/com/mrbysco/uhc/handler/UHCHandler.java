@@ -763,7 +763,7 @@ public class UHCHandler {
 			boolean isSpectator = teamName.equals("spectator");
 			CompoundTag entityData = player.getPersistentData();
 
-			if (isSpectator && entityData.contains(TIMER_TAG)) {
+			if (isSpectator && entityData.contains(TIMER_TAG)&&hasAliveAllies(player,scoreboard)) {
 				int timer = entityData.getInt(TIMER_TAG);
 
 				UHCPacketHandler.INSTANCE.send(
@@ -775,6 +775,19 @@ public class UHCHandler {
 					timer--;
 					entityData.putInt(TIMER_TAG, timer);
 				} else {
+					double worldBorderSize = overworld.getWorldBorder().getSize();
+					double spreadMaxRange = worldBorderSize / 2;
+					double spreadDistance = 50.0;
+
+					List<ServerPlayer> playerList = new ArrayList<>(Collections.singletonList((ServerPlayer) player));
+					SpreadUtil.spread(playerList, new SpreadPosition(0, 0), spreadDistance - 10, spreadMaxRange, overworld, false);
+
+					scoreboard.removePlayerFromTeam(player.getScoreboardName());
+
+					if (player instanceof ServerPlayer serverPlayer) {
+						serverPlayer.setGameMode(GameType.SURVIVAL);
+					}
+
 					entityData.remove(TIMER_TAG);
 				}
 			}
