@@ -36,5 +36,10 @@ public class UHCPacketHandler {
 				.decoder(ShrinkTimeSyncPacket::decode)
 				.consumerMainThread(ShrinkTimeSyncPacket::handle)
 				.add();
+		INSTANCE.messageBuilder(RespawnTimerSyncPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+				.encoder(RespawnTimerSyncPacket::encode)
+				.decoder(RespawnTimerSyncPacket::decode)
+				.consumerMainThread(RespawnTimerSyncPacket::handle)
+				.add();
 	}
 }

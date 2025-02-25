@@ -5,6 +5,7 @@ import com.mrbysco.uhc.data.UHCSaveData;
 import com.mrbysco.uhc.data.UHCTimerData;
 import com.mrbysco.uhc.lists.SpawnItemList;
 import com.mrbysco.uhc.lists.info.SpawnItemInfo;
+import com.mrbysco.uhc.packets.RespawnTimerSyncPacket;
 import com.mrbysco.uhc.packets.ShrinkTimeSyncPacket;
 import com.mrbysco.uhc.packets.UHCPacketHandler;
 import com.mrbysco.uhc.packets.UHCPacketMessage;
@@ -756,27 +757,24 @@ public class UHCHandler {
 			final ServerLevel overworld = (ServerLevel) level;
 			Scoreboard scoreboard = overworld.getScoreboard();
 
-
-
 			Team spectatorTeam = scoreboard.getPlayerTeam("spectator");
 			boolean isSpectator = spectatorTeam != null && spectatorTeam.getPlayers().contains(player.getScoreboardName());
 			CompoundTag entityData = player.getPersistentData();
-			Objective respawnTimerObjective = scoreboard.getObjective("respawnTimer");
-			UHCSaveData saveData = UHCSaveData.get(overworld);
 			UHCTimerData timerData = UHCTimerData.get(overworld);
-			int shrinkTimer = timerData.getShrinkTimeUntil();
-			boolean shrinkFlag = shrinkTimer > TimerHandler.tickTime(saveData.getShrinkTimer());
-			if (isSpectator&&!shrinkFlag) {
 
+			if (isSpectator) {
 				if (entityData.contains(TIMER_TAG)) {
 					int timer = entityData.getInt(TIMER_TAG);
+
+					// Send the timer to the client
+					UHCPacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) player), new RespawnTimerSyncPacket(timer));
+
 					if (timer < 0) {
 						timer--;
 						entityData.putInt(TIMER_TAG, timer);
-
-						scoreboard.getOrCreatePlayerScore(player.getScoreboardName(), respawnTimerObjective).setScore(timer/20);
 					} else {
 						if (hasAliveAllies(player, scoreboard)) {
+							// Respawn logic
 							double worldBorderSize = overworld.getWorldBorder().getSize();
 							double spreadMaxRange = worldBorderSize / 2;
 							double spreadDistance = 50.0;
@@ -800,16 +798,12 @@ public class UHCHandler {
 							}
 						}
 						entityData.remove(TIMER_TAG);
-						scoreboard.resetPlayerScore(player.getScoreboardName(), respawnTimerObjective);
 					}
-				} /*else {
-					if (entityData.contains(TIMER_TAG)) {
-						entityData.remove(TIMER_TAG);
-						scoreboard.resetPlayerScore(player.getScoreboardName(), respawnTimerObjective);
-					}*/
 				}
 			}
 		}
+	}
+
 
 	private boolean hasAliveAllies(Player player, Scoreboard scoreboard) {
 		CompoundTag entityData = player.getPersistentData();

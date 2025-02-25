@@ -15,19 +15,21 @@ import java.time.format.DateTimeFormatter;
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ClientHandler {
 
-    private static String currentTime = "";
     private static String shrinkTime = "00:00";
+    private static String respawnTime = "00";
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static int respawnTimeInSeconds = 0;
     private static int shrinkTimeInSeconds = 0;
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            currentTime = LocalTime.now().format(TIME_FORMAT);
 
             int minutes = shrinkTimeInSeconds / 60;
             int seconds = shrinkTimeInSeconds % 60;
+            int secondsRespawn = (respawnTimeInSeconds % 1200) / 20;
             shrinkTime = String.format("%02d:%02d", seconds, minutes);
+            respawnTime = String.format("%02d", secondsRespawn);
         }
     }
 
@@ -41,10 +43,16 @@ public class ClientHandler {
 
         guiGraphics.drawString(minecraft.font, "Сжатие через: " + shrinkTime, 10, 25, 0xFF5555);
 
+        guiGraphics.drawString(minecraft.font, "Респаун через: " + respawnTime, 10, 40, 0x00FF00);
+
         RenderSystem.disableBlend();
     }
 
     public static void setShrinkTime(int shrinkTimeSeconds) {
         shrinkTimeInSeconds = shrinkTimeSeconds;
+    }
+
+    public static void setRespawnTime(int respawnTimeSeconds) {
+        respawnTimeInSeconds = respawnTimeSeconds;
     }
 }
