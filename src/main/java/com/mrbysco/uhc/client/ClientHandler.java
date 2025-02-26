@@ -17,7 +17,6 @@ public class ClientHandler {
 
     private static String shrinkTime = "00:00";
     private static String respawnTime = "00";
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static int respawnTimeInSeconds = 0;
     private static int shrinkTimeInSeconds = 0;
     private static String playerTeam = "";
@@ -29,7 +28,7 @@ public class ClientHandler {
             int minutes = shrinkTimeInSeconds / 60;
             int seconds = shrinkTimeInSeconds % 60;
             int secondsRespawn = (respawnTimeInSeconds % 1200) / 20;
-            shrinkTime = String.format("%02d:%02d", seconds, minutes);
+            shrinkTime = String.format("%02d:%02d", minutes, seconds);
             respawnTime = String.format("%02d", secondsRespawn);
         }
     }
@@ -58,7 +57,7 @@ public class ClientHandler {
     }
 
     public static void setShrinkTime(int shrinkTimeSeconds) {
-        shrinkTimeInSeconds = shrinkTimeSeconds;
+        shrinkTimeInSeconds = shrinkTimeSeconds/60;
     }
 
     public static void setRespawnTime(int respawnTimeSeconds, String team) {
