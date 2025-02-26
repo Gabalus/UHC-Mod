@@ -763,7 +763,13 @@ public class UHCHandler {
 			boolean isSpectator = teamName.equals("spectator");
 			CompoundTag entityData = player.getPersistentData();
 
-			if (isSpectator && entityData.contains(TIMER_TAG)&&hasAliveAllies(player,scoreboard)) {
+			UHCSaveData saveData = UHCSaveData.get(overworld);
+			UHCTimerData timerData = UHCTimerData.get(overworld);
+			int shrinkTimer = timerData.getShrinkTimeUntil();
+
+			boolean shrinkFlag = shrinkTimer < TimerHandler.tickTime(saveData.getShrinkTimer());
+
+			if (isSpectator && entityData.contains(TIMER_TAG)&&hasAliveAllies(player,scoreboard)&&shrinkFlag) {
 				int timer = entityData.getInt(TIMER_TAG);
 
 				UHCPacketHandler.INSTANCE.send(
