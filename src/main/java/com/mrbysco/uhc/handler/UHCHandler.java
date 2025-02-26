@@ -788,7 +788,10 @@ public class UHCHandler {
 					String originalTeamName = entityData.getString(ORIGINAL_TEAM_TAG);
 					PlayerTeam teamTag = scoreboard.getPlayerTeam(originalTeamName);
 					scoreboard.addPlayerToTeam(player.getName().getString(),teamTag);
-
+					UHCPacketHandler.INSTANCE.send(
+							PacketDistributor.PLAYER.with(() -> (ServerPlayer) player),
+							new RespawnTimerSyncPacket(timer, teamTag.getName())
+					);
 					if (player instanceof ServerPlayer serverPlayer) {
 						serverPlayer.setGameMode(GameType.SURVIVAL);
 					}
