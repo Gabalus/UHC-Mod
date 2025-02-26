@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -41,13 +42,19 @@ public class ClientHandler {
         GuiGraphics guiGraphics = event.getGuiGraphics();
         RenderSystem.enableBlend();
 
-        guiGraphics.drawString(minecraft.font, "Сжатие через: " + shrinkTime, 10, 25, 0xFF5555);
+        guiGraphics.drawString(minecraft.font, "Время игры: " + shrinkTime, 10, 25, 0xFF5555);
 
         if (playerTeam.equals("spectator")) {
             guiGraphics.drawString(minecraft.font, "Респаун через: " + respawnTime, 10, 40, 0x00FF00);
         }
 
         RenderSystem.disableBlend();
+    }
+
+    @SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        respawnTimeInSeconds = 0;
+        playerTeam = "";
     }
 
     public static void setShrinkTime(int shrinkTimeSeconds) {

@@ -688,7 +688,7 @@ public class UHCHandler {
 			newData.putLong("deathPos", deathPos.asLong());
 			newData.putString("deathDim", originalPlayer.level().dimension().location().toString());
 			Scoreboard scoreboard = newPlayer.level().getScoreboard();
-			Team currentTeam = scoreboard.getPlayersTeam(newPlayer.getScoreboardName());
+			Team currentTeam = scoreboard.getPlayerTeam(originalData.getString(ORIGINAL_TEAM_TAG));
 			if (currentTeam != null && !currentTeam.getName().equals("spectator")) {
 				CompoundTag data = newPlayer.getPersistentData();
 				data.putString(ORIGINAL_TEAM_TAG, currentTeam.getName());
@@ -701,15 +701,18 @@ public class UHCHandler {
 	public void onPlayerDeath(LivingDeathEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
 			Level level = player.level();
-			/*if (!level.isClientSide && level.dimension().equals(Level.OVERWORLD)) {
+			if (!level.isClientSide && level.dimension().equals(Level.OVERWORLD)) {
 				Scoreboard scoreboard = level.getScoreboard();
-				Team currentTeam = scoreboard.getPlayersTeam(player.getScoreboardName());
-				if (currentTeam != null && !currentTeam.getName().equals("spectator")) {
-					CompoundTag data = player.getPersistentData();
-					data.putInt("ORIGINAL_TEAM_TAG", 123);
-					Level asd = player.level();
+				PlayerTeam spectatorTeam = scoreboard.getPlayerTeam("spectator");
+				if (spectatorTeam == null) {
+					spectatorTeam = scoreboard.addPlayerTeam("spectator");
 				}
-			}*/
+				CompoundTag data = player.getPersistentData();
+				Team currentTeam = scoreboard.getPlayersTeam(player.getScoreboardName());
+				data.putString(ORIGINAL_TEAM_TAG, currentTeam.getName());
+				scoreboard.addPlayerToTeam(player.getScoreboardName(), spectatorTeam);
+				player.setGameMode(GameType.SPECTATOR);
+			}
 		}
 	}
 
@@ -723,17 +726,10 @@ public class UHCHandler {
 			if (overworld != null) {
 				UHCSaveData saveData = UHCSaveData.get(overworld);
 				if (saveData.isUhcOnGoing()) {
-					PlayerTeam spectatorTeam = scoreboard.getPlayerTeam("spectator");
-					if (spectatorTeam == null) {
-						spectatorTeam = scoreboard.addPlayerTeam("spectator");
-					}
-					scoreboard.addPlayerToTeam(player.getScoreboardName(), spectatorTeam);
 
-					scoreboard.getOrCreateObjective("health");
-					scoreboard.resetPlayerScore(player.getScoreboardName(), scoreboard.getOrCreateObjective("health"));
 
 					if (player instanceof ServerPlayer serverPlayer) {
-						serverPlayer.setGameMode(GameType.SPECTATOR);
+
 						CompoundTag entityData = player.getPersistentData();
 						entityData.putInt(TIMER_TAG, 600);
 						Objective respawnTimerObjective = scoreboard.getObjective("respawnTimer");
@@ -769,7 +765,7 @@ public class UHCHandler {
 
 			boolean shrinkFlag = shrinkTimer < TimerHandler.tickTime(saveData.getShrinkTimer());
 
-			if (isSpectator && entityData.contains(TIMER_TAG)&&hasAliveAllies(player,scoreboard)&&shrinkFlag) {
+			if (isSpectator && entityData.contains(TIMER_TAG) && entityData.contains(ORIGINAL_TEAM_TAG) &&hasAliveAllies(player,scoreboard)&&shrinkFlag) {
 				int timer = entityData.getInt(TIMER_TAG);
 
 				UHCPacketHandler.INSTANCE.send(
@@ -789,6 +785,9 @@ public class UHCHandler {
 					SpreadUtil.spread(playerList, new SpreadPosition(0, 0), spreadDistance - 10, spreadMaxRange, overworld, false);
 
 					scoreboard.removePlayerFromTeam(player.getScoreboardName());
+					String originalTeamName = entityData.getString(ORIGINAL_TEAM_TAG);
+					PlayerTeam teamTag = scoreboard.getPlayerTeam(originalTeamName);
+					scoreboard.addPlayerToTeam(player.getName().getString(),teamTag);
 
 					if (player instanceof ServerPlayer serverPlayer) {
 						serverPlayer.setGameMode(GameType.SURVIVAL);
