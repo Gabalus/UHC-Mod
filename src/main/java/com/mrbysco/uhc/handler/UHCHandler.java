@@ -108,15 +108,19 @@ public class UHCHandler {
 
 	@SubscribeEvent
 	public static void onPlayerAttack(LivingAttackEvent event) {
-		if (!isGameStarted && event.getSource().getEntity() instanceof Player) {
-			event.setCanceled(true);
+		if (!isGameStarted && event.getSource().getEntity() instanceof ServerPlayer player) {
+			if(player.gameMode.getGameModeForPlayer() != GameType.CREATIVE) {
+                event.setCanceled(true);
+            }
 		}
 	}
 
 	@SubscribeEvent
 	public static void onBlockBreak(BlockEvent.BreakEvent event) {
-		if (!isGameStarted) {
-			event.setCanceled(true);
+		if (!isGameStarted&& event.getPlayer() instanceof ServerPlayer player) {
+			if(player.gameMode.getGameModeForPlayer() != GameType.CREATIVE) {
+                event.setCanceled(true);
+            }
 		}
 	}
 
