@@ -32,6 +32,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.item.DyeColor;
@@ -54,11 +55,13 @@ import net.minecraftforge.event.TickEvent.PlayerTickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.event.entity.item.ItemTossEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.PlayerRespawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -76,6 +79,47 @@ public class UHCHandler {
 	public int uhcStartTimer;
 	private static final String TIMER_TAG = "SpectatorRespawnTimer";
 	private static final String ORIGINAL_TEAM_TAG = "OriginalTeam";
+
+	private static boolean isGameStarted = false;
+
+	@SubscribeEvent
+	public static void UhcBlockEvents(TickEvent.PlayerTickEvent event) {
+		Player player = event.player;
+		Level level = player.level();
+		if (event.phase.equals(TickEvent.Phase.START) && event.side.isServer() && level.dimension().equals(Level.OVERWORLD)) {
+			final ServerLevel overworld = (ServerLevel) level;
+			ItemStack bookStack = new ItemStack(ModRegistry.UHC_BOOK.get());
+
+			UHCSaveData saveData = UHCSaveData.get(overworld);
+
+			if (!saveData.isUhcOnGoing() && !saveData.isUhcStarting()) {
+				isGameStarted = false;
+
+
+					player.addEffect(new MobEffectInstance(MobEffects.SATURATION, 20*5, 10, true, false));
+
+
+					player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20*5, 10, true, false));
+			} else {
+				isGameStarted = true;
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public static void onPlayerAttack(LivingAttackEvent event) {
+		if (!isGameStarted && event.getSource().getEntity() instanceof Player) {
+			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onBlockBreak(BlockEvent.BreakEvent event) {
+		if (!isGameStarted) {
+			event.setCanceled(true);
+		}
+	}
+
 
 	@SubscribeEvent
 	public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -229,20 +273,9 @@ public class UHCHandler {
 						}
 					}
 
-					player.removeAllEffects();
-					entityData.putBoolean("startFatigue", false);
-
-					if (player.getActiveEffects().size() > 0)
-						player.removeAllEffects();
-
 					saveData.setUhcStarting(false);
 					saveData.setUhcOnGoing(true);
 				} else {
-					if (player.getEffect(MobEffects.DIG_SLOWDOWN) == null)
-						player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 32767 * 20, 10, true, false));
-
-					if (player.getEffect(MobEffects.MOVEMENT_SLOWDOWN) == null)
-						player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 32767 * 20, 10, true, false));
 
 					if (player.getInventory().contains(new ItemStack(ModRegistry.UHC_BOOK.get()))) {
 						int bookSlot = player.getInventory().findSlotMatchingUnusedItem(new ItemStack(ModRegistry.UHC_BOOK.get()));
@@ -252,16 +285,6 @@ public class UHCHandler {
 
 					if (!player.getInventory().getItem(39).isEmpty())
 						player.getInventory().removeItemNoUpdate(39);
-				}
-			}
-			if (saveData.isUhcOnGoing()) {
-				if (entityData.getBoolean("startFatigue")) {
-					player.removeAllEffects();
-
-					if (player.getActiveEffects().size() > 0)
-						player.removeAllEffects();
-
-					entityData.putBoolean("startFatigue", false);
 				}
 			}
 		}
@@ -318,15 +341,6 @@ public class UHCHandler {
 					if (!player.getInventory().contains(bookStack))
 						player.getInventory().add(bookStack);
 				}
-
-				if (player.getEffect(MobEffects.SATURATION) == null)
-					player.addEffect(new MobEffectInstance(MobEffects.SATURATION, 32767 * 20, 10, true, false));
-
-				if (player.getEffect(MobEffects.DAMAGE_RESISTANCE) == null)
-					player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 32767 * 20, 10, true, false));
-
-				if (player.getEffect(MobEffects.DIG_SLOWDOWN) == null)
-					player.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 32767 * 20, 10, true, false));
 			}
 		}
 	}
